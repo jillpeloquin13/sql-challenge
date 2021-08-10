@@ -1,55 +1,68 @@
 ----Create the schema
---DROP TABLE dept_manager;
+--DROP TABLE employees;
+
+CREATE TABLE titles (
+	title_id VARCHAR(255) PRIMARY KEY NOT NULL,
+	title VARCHAR(255)
+);
 
 CREATE TABLE employees (
 	emp_no int PRIMARY KEY NOT NULL, 
-	emp_title varchar,
+	emp_title varchar(255),
 	birth_date date,
-	first_name varchar,
-	last_name varchar,
-	sex varchar,
-	hire_date date
+	first_name varchar(255),
+	last_name varchar(255),
+	sex varchar(255),
+	hire_date date,
+	FOREIGN KEY (emp_title) REFERENCES titles(title_id)
 );
 
 CREATE TABLE salaries (
 	emp_no int PRIMARY KEY NOT NULL,
 	salary int,
-	CONSTRAINT fk_emp_no
-      FOREIGN KEY(emp_no) 
-	  REFERENCES employees(emp_no)
-)
-
-
-CREATE TABLE titles (
-	title_id VARCHAR PRIMARY KEY NOT NULL,
-	title VARCHAR
-	--CONSTRAINT fk_title_id
-      --FOREIGN KEY(title_id) 
-	  --REFERENCES employees(emp_title)
-)
-
-CREATE TABLE dept_emp (
-	emp_no INT NOT NULL, 
-	dept_no VARCHAR
-)
+	FOREIGN KEY (emp_no) REFERENCES employees(emp_no)
+);
 
 CREATE TABLE departments (
-	dept_no VARCHAR PRIMARY KEY NOT NULL, 
-	dept_name VARCHAR
-)
+	dept_no VARCHAR(255) PRIMARY KEY NOT NULL, 
+	dept_name VARCHAR(255)
+);
+
+CREATE TABLE dept_emp (
+	id SERIAL PRIMARY KEY NOT NULL, 
+	emp_no INT NOT NULL, 
+	dept_no VARCHAR(255), 
+	FOREIGN KEY (emp_no) REFERENCES employees(emp_no),
+	FOREIGN KEY (dept_no) REFERENCES departments(dept_no)
+);
 
 CREATE TABLE dept_manager (
-	dept_no VARCHAR NOT NULL, 
-	emp_no INT
-)
+	id SERIAL PRIMARY KEY NOT NULL, 
+	dept_no VARCHAR(255) NOT NULL, 
+	emp_no INT NOT NULL, 
+	FOREIGN KEY (emp_no) REFERENCES employees(emp_no),
+	FOREIGN KEY (dept_no) REFERENCES departments(dept_no)
+);
 
 ------IMPORT THE DATA-------
+
+--titles
+copy public.titles
+FROM 'C:/Users/jillp/DOCUME~1/Class/EMER-V~1/EMER-V~1/02-HOM~1/SQL-CH~1/RESOUR~1/titles.CSV' 
+DELIMITER ',' 
+CSV HEADER 
 
 --employees table
 copy public.employees (emp_no, emp_title, birth_date, first_name, last_name, sex, hire_date) 
 FROM 'C:/Users/jillp/DOCUME~1/Class/EMER-V~1/EMER-V~1/02-HOM~1/SQL-CH~1/RESOUR~1/EMPLOY~1.CSV' 
 DELIMITER ','
 CSV HEADER
+
+--salaries
+copy public.salaries
+FROM 'C:/Users/jillp/DOCUME~1/Class/EMER-V~1/EMER-V~1/02-HOM~1/SQL-CH~1/RESOUR~1/salaries.CSV' 
+DELIMITER ',' 
+CSV HEADER 
 
 --departments
 copy public.departments (dept_no, dept_name) 
@@ -58,28 +71,24 @@ DELIMITER ','
 CSV HEADER 
 
 --dept emp
-copy public.dept_emp
+copy public.dept_emp (emp_no, dept_no) 
 FROM 'C:/Users/jillp/DOCUME~1/Class/EMER-V~1/EMER-V~1/02-HOM~1/SQL-CH~1/RESOUR~1/dept_emp.CSV' 
 DELIMITER ',' 
 CSV HEADER 
 
---titles
-copy public.titles
-FROM 'C:/Users/jillp/DOCUME~1/Class/EMER-V~1/EMER-V~1/02-HOM~1/SQL-CH~1/RESOUR~1/titles.CSV' 
-DELIMITER ',' 
-CSV HEADER 
-
---salaries
-copy public.salaries
-FROM 'C:/Users/jillp/DOCUME~1/Class/EMER-V~1/EMER-V~1/02-HOM~1/SQL-CH~1/RESOUR~1/salaries.CSV' 
-DELIMITER ',' 
-CSV HEADER 
-
 --dept manager
-copy public.dept_manager
+copy public.dept_manager (dept_no, emp_no)
 FROM 'C:/Users/jillp/DOCUME~1/Class/EMER-V~1/EMER-V~1/02-HOM~1/SQL-CH~1/RESOUR~1/dept_manager.CSV' 
 DELIMITER ',' 
 CSV HEADER 
+
+-----Spot check the import---
+Select count(*)from departments
+Select count(*)from employees
+Select count(*)from titles
+Select count(*)from salaries
+Select count(*)from dept_emp
+Select count(*)from dept_manager
 
 -----Analysis---------
 ---List the following details of each employee: employee number, last name, first name, sex, and salary.
@@ -128,7 +137,8 @@ FROM employees e
 INNER JOIN dept_emp de ON
 e.emp_no=de.emp_no
 INNER JOIN departments d ON
-de.dept_no=d.dept_no;
+de.dept_no=d.dept_no
+ORDER BY "Department Name"; 
 
 
 --List first name, last name, and sex for employees whose first name is "Hercules" and last names begin with "B."
@@ -190,7 +200,7 @@ s.emp_no=e.emp_no
 INNER JOIN titles t ON 
 e.emp_title=t.title_id
 
-------Scratch the query to use in the notebooke
+------Scratch the query to use in the notebook
 Select 
 	"Title", avg("salary")
 From Salaries_bands
